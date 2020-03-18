@@ -6,12 +6,14 @@ set -o pipefail
 set -o nounset
 
 user="magento"
-migration_conf="/var/www/shop/vendor/magento/data-migration-tool/etc/opensource-to-opensource/1.9.3.7"
+web_root="/var/www/shop"
+migration_conf="${web_root}/vendor/magento/data-migration-tool/etc/opensource-to-opensource/1.9.3.7"
 source_db="magento_1"
 destination_db="magento_2"
 db_user="magento"
 db_password="some_password"
 migration_crypt_key="some_crypt_key"
+mage_version="2.3"
 
 sudo -u "${user}" bash -c "tee ${migration_conf}/config.xml" > /dev/null <<ILOVEBASH
 <?xml version="1.0" encoding="UTF-8"?>
@@ -177,4 +179,9 @@ sudo -u "${user}" bash -c "tee ${migration_conf}/config.xml" > /dev/null <<ILOVE
 </config>
 ILOVEBASH
 
-sudo -u "${user}" bash -c "/var/www/shop/bin/magento migrate:data ${migration_conf}/config.xml"
+sudo -H -u "${user}" bash -s <<ILOVEBASH
+ln -s ${home}/.composer/auth.json ${webroot}/auth.json
+composer config repositories.magento composer https://repo.magento.com
+composer require magento/data-migration-tool:${mage_version}
+${web_root}/bin/magento migrate:data ${migration_conf}/config.xml
+ILOVEBASH
